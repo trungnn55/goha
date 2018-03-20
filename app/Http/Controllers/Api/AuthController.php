@@ -1,18 +1,43 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use Illuminate\Http\Request;
+use DB;
+use Validator;
 
 class AuthController extends BaseController
 {
-    public function login(\Request $request)
+    public function signIn(Request $request)
     {
-        // dd(base64_encode('trung'));
-        dd($this->hashPassword('trung1992'));
-        return $this->responseSuccess([],[]);
+        $email = $request->get('email');
+        $password = $request->get('password');
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->responseError(self::VALIDATE_ERROR, $validator->errors()->first());
+        }
+        $user = DB::table('cscart_users')
+            ->where('email', $email)
+            ->first();
+        if ($user) {
+            $hashPassword = $this->hashPassword($password, $user->salt);
+            $userConfirm = DB::table('cscart_users')
+                ->where('email', $email)
+                ->where('password', $hashPassword)
+                ->first();
+            if ($userConfirm) {
+                return $this->responseSuccess(['sign_in' => true]);
+            }
+        }
+
+        return $this->responseError(self::RECORD_NOT_FOUND, 'not found');
     }
 
-    function hashPassword($str)
+    function hashPassword($password, $salt)
     {
-        return hash("md5", $str . "salt");
+        return md5(md5($password) . md5($salt));
     }
 }

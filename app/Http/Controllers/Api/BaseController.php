@@ -6,7 +6,10 @@ use Illuminate\Routing\Controller;
 
 class BaseController extends Controller
 {
-    public function responseSuccess($data, $params)
+    const VALIDATE_ERROR = 701;
+    const RECORD_NOT_FOUND = 702;
+
+    public function responseSuccess($data, $params = [])
     {
         return response()->json([
             'data' => $data,
@@ -14,7 +17,7 @@ class BaseController extends Controller
         ]);
     }
 
-    public function responseError($message, $code)
+    public function responseError($code, $message)
     {
         return response()->json([
             'status' => $code,
