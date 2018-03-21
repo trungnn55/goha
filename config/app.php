@@ -124,6 +124,8 @@ return [
 
     'log_level' => env('APP_LOG_LEVEL', 'debug'),
 
+    'expire_token' => time() + 24*60*60,
+
     /*
     |--------------------------------------------------------------------------
     | Autoloaded Service Providers

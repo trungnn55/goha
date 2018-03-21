@@ -22,6 +22,7 @@ class AuthController extends BaseController
         $user = DB::table('cscart_users')
             ->where('email', $email)
             ->first();
+
         if ($user) {
             $hashPassword = $this->hashPassword($password, $user->salt);
             $userConfirm = DB::table('cscart_users')
@@ -29,7 +30,12 @@ class AuthController extends BaseController
                 ->where('password', $hashPassword)
                 ->first();
             if ($userConfirm) {
-                return $this->responseSuccess(['sign_in' => true]);
+                $token = encode_token($userConfirm->user_id);
+                $dataResponse = [
+                    'status' => true,
+                    'token' => $token,
+                ];
+                return $this->responseSuccess($dataResponse);
             }
         }
 
