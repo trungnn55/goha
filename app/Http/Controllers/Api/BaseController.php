@@ -25,6 +25,30 @@ class BaseController extends Controller
         ]);
     }
 
+    public function params($dataPaginate, $sortBy, $sortOrder)
+    {
+        return [
+            'total_item' => $dataPaginate->total(),
+            'current_page' => $dataPaginate->currentPage(),
+            'per_page' => $dataPaginate->perPage(),
+            'query' => $dataPaginate->nextPageUrl(),
+            'sort_by' => $sortBy,
+            'sort_order' => $sortOrder,
+        ];
+    }
+
+    public static function floor($x)
+    {
+        $is_negative = $x < 0;
+        $x = (string) $x;
+        if ($is_negative && strpos($x, '.')) {
+            list($x, $dec) = explode('.', $x);
+            $x = $x - ($dec ? 1 : 0);
+        }
+
+        return (int) $x;
+    }
+
     public function checkToken($token)
     {
         try {
