@@ -12,7 +12,7 @@ class ProductController extends BaseController
             ->join('cscart_product_prices as pp', 'ps.product_id', '=', 'pp.product_id')
             ->select(
                 'p.*',
-                'pp.price',
+                'pp.price'
             )
             ->where('ps.amount', '>', 0)
             ->get();

@@ -10,5 +10,9 @@ function encode_token($id) {
 }
 
 function decode_token($data) {
-    return unserialize(base64_decode($data));
+    try {
+        return unserialize(base64_decode($data));
+    } catch (\Exception $e) {
+        return false;
+    }
 }

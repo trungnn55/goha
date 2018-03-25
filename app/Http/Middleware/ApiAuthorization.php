@@ -19,7 +19,7 @@ class ApiAuthorization
     {
         $token = $request->header('Authorization');
 
-        if ($token && $token === env('API_AUTHORIZATION')) {
+        if ($token && $token === config('app.header_api_token')) {
             return $next($request);
         }
 

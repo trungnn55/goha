@@ -3,9 +3,15 @@
 namespace App\Http\Controllers\Api;
 
 use Illuminate\Routing\Controller;
+use Illuminate\Http\Request;
+use Log;
+use Exception;
+use DB;
 
 class BaseController extends Controller
 {
+    const HTTP_OK = 200;
+    const HTTP_SERVER_ERROR = 500;
     const VALIDATE_ERROR = 701;
     const RECORD_NOT_FOUND = 702;
 
@@ -49,26 +55,44 @@ class BaseController extends Controller
         return (int) $x;
     }
 
-    public function checkToken($token)
+    function hashPassword($password, $salt)
     {
-        try {
-            $tokenHeader = $request->header('Authorization');
-            if ($tokenHeader) {
-                $token = decode_token($tokenHeader);
-                $user = DB::table('cscart_users')
-                    ->where('user_id', $token['id'])
-                    ->first();
-                if ($user && $token > time()) {
-                    return $next($request);
-                }
-            }
-        } catch(\Exception $e) {
-            \Log::error($e);
+        return md5(md5($password) . md5($salt));
+    }
+
+    function fnGenerateSalt($length = 10)
+    {
+        $length = $length > 10 ? 10 : $length;
+
+        $salt = '';
+
+        for ($i = 0; $i < $length; $i++) {
+            $salt .= chr(rand(33, 126));
         }
 
-        return response()->json([
-            'status' => false,
-            'message' => 'Invalid token'
-        ]);
+        return $salt;
+    }
+
+    public function getIdFromToken(Request $request)
+    {
+        try {
+            $tokenKey = $request->header('token-key');
+            if ($tokenKey) {
+                $token = decode_token($tokenKey);
+                if ($token !== false) {
+                    $user = DB::table('cscart_users')
+                        ->where('user_id', $token['id'])
+                        ->first();
+                    if ($user && $token > time()) {
+                        return $token['id'];
+                    }
+                }
+                throw new Exception('Invalid token key');
+            }
+        } catch(Exception $e) {
+            Log::error($e);
+            throw new Exception($e->getMessage());
+        }
+
     }
 }

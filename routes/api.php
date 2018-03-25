@@ -16,7 +16,8 @@ use Illuminate\Http\Request;
 Route::group(['namespace' => 'Api', 'middleware' => ['authorize',]], function () {
     Route::post('/auth/sign-in', 'AuthController@signIn');
     Route::post('/auth/sign-up', 'AuthController@signUp');
-    Route::resource('/user', 'UserController');
+    Route::get('/user/profile', 'UserController@getProfile');
+    Route::post('/user/update-profile', 'UserController@updateProfile');
     Route::resource('/banner', 'BannerController');
     Route::get('/product_sale', 'ProductController@productSale');
 });

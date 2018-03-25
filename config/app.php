@@ -123,6 +123,7 @@ return [
     'log' => env('APP_LOG', 'single'),
 
     'log_level' => env('APP_LOG_LEVEL', 'debug'),
+    'header_api_token' => 'Basic b2tiLmVjaW4uMjc2OUBnbWFpbC5jb206MzQxNk1YNDk4QmpKVmE5NHoyT0J3M1lXWGkwZjBWNzI=',
 
     'expire_token' => time() + 24*60*60,
     'per_page' => 10,
