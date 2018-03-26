@@ -20,4 +20,5 @@ Route::group(['namespace' => 'Api', 'middleware' => ['authorize',]], function ()
     Route::post('/user/update-profile', 'UserController@updateProfile');
     Route::resource('/banner', 'BannerController');
     Route::get('/product-sale', 'ProductController@productSale');
+    Route::get('/hot-deal', 'ProductController@hotDeal');
 });

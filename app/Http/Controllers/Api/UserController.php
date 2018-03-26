@@ -24,77 +24,109 @@ class UserController extends BaseController
         } catch (Exception $e) {
             Log::error($e);
 
-            return $this->responseError(false, $e->getMessage());
+            return $this->responseError(self::HTTP_SERVER_ERROR, $e->getMessage());
         }
     }
 
     public function updateProfile(Request $request)
     {
+        $billing = $request->get('billing');
+        $shipping = $request->get('shipping');
         $id = $this->getIdFromToken($request);
-        $user = DB::table('cscart_users')->where('user_id', $id)->first();
-        $rules = [
+        $user = DB::table('cscart_users')
+            ->where('user_id', $id)
+            ->first();
+
+        $ruleRequest = [
             'email' => [
                 'required',
                 'email',
                 Rule::unique('cscart_users')->ignore($id, 'user_id')
             ],
-            'password' => 'required|min:6',
+            'password' => 'required',
             'birthday' => 'date',
-            'b_firstname' => 'required',
-            'b_lastname' => 'required',
-            'b_phone' => 'required',
-            'b_country' => '',
-            'b_zipcode' => '',
-            'b_state' => '',
-            'b_address' => '',
-            'b_address_2' => '',
-            'ship_to_another' => '',
+            'billing' => 'required',
+            'shipping' => 'json',
         ];
 
-        $validator = Validator::make($request->all(), $rules);
+        $ruleCommon = [
+            'firstname' => 'required',
+            'lastname' => 'required',
+            'phone' => 'required',
+            'country' => 'max:2',
+        ];
+
+        $validator = Validator::make($request->all(), $ruleRequest);
 
         if ($validator->fails()) {
             return $this->responseError(self::VALIDATE_ERROR, $validator->errors()->first());
         }
 
+        if (!is_json($billing) || ($shipping && !is_json($shipping))) {
+            return $this->responseError(self::VALIDATE_ERROR, 'billing and shipping must be a json format');
+        }
+
+        $billing = json_decode($billing, true);
+
         $hashPassword = $this->hashPassword($request->get('password'), $user->salt);
 
         $dataUserUpdate = [
-            'firstname' => $request->get('b_firstname'),
-            'lastname' => $request->get('b_lastname'),
             'email' => $request->get('email'),
-            'phone' => $request->get('b_phone'),
             'birthday' => $request->get('birthday') ? strtotime($request->get('birthday')) : 0,
+            'firstname' => $billing['firstname'],
+            'lastname' => $billing['lastname'],
+            'phone' => $billing['phone'],
         ];
 
-        $dataUserProfile = [
-            'b_firstname' => $request->get('b_firstname'),
-            'b_lastname' => $request->get('b_lastname'),
-            'b_address' => $request->get('b_address') ? $request->get('b_address') : '',
-            'b_address_2' => $request->get('b_address_2') ? $request->get('b_address_2') : '',
-            'b_city' => $request->get('b_city') ? $request->get('b_city') : '',
-            'b_state' => $request->get('b_state') ? $request->get('b_state') : '',
-            'b_country' => $request->get('b_country') ? $request->get('b_country') : '',
-            'b_zipcode' => $request->get('b_zipcode') ? $request->get('b_zipcode') : '',
-            'b_phone' => $request->get('b_phone') ? $request->get('b_phone') : '',
+        $validateBilling = Validator::make($billing, $ruleCommon);
 
-            's_firstname' => $request->get('b_firstname'),
-            's_lastname' => $request->get('b_lastname'),
-            's_address' => $request->get('b_address') ? $request->get('b_address') : '',
-            's_address_2' => $request->get('b_address_2') ? $request->get('b_address_2') : '',
-            's_city' => $request->get('b_city') ? $request->get('b_city') : '',
-            's_state' => $request->get('b_state') ? $request->get('b_state') : '',
-            's_country' => $request->get('b_country') ? $request->get('b_country') : '',
-            's_zipcode' => $request->get('b_zipcode') ? $request->get('b_zipcode') : '',
-            's_phone' => $request->get('b_phone') ? $request->get('b_phone') : '',
+        if ($validateBilling->fails()) {
+            return $this->responseError(self::VALIDATE_ERROR, $validateBilling->errors()->first());
+        }
+
+        $dataProfileBilling = [
+            'b_firstname' => $billing['firstname'],
+            'b_lastname' => $billing['lastname'],
+            'b_phone' => $billing['phone'],
+            'b_address' => isset($billing['address']) ? $billing['address'] : '',
+            'b_address_2' => isset($billing['address_2']) ? $billing['address_2'] : '',
+            'b_city' => isset($billing['city']) ? $billing['city'] : '',
+            'b_state' => isset($billing['state']) ? $billing['state'] : '',
+            'b_country' => isset($billing['country']) ? $billing['country'] : '',
+            'b_zipcode' => isset($billing['zipcode']) ? $billing['zipcode'] : '',
         ];
+
+        if ($shipping) {
+            $shipping = json_decode($shipping, true);
+        }  else {
+            $shipping = $billing;
+        }
+
+        $validateShipping = Validator::make($shipping, $ruleCommon);
+
+        if ($validateShipping->fails()) {
+            return $this->responseError(self::VALIDATE_ERROR, $validateShipping->errors()->first());
+        }
+
+        $dataProfileShipping = [
+            's_firstname' => $shipping['firstname'],
+            's_lastname' => $shipping['lastname'],
+            's_phone' => $shipping['phone'],
+            's_address' => isset($shipping['address']) ? $shipping['address'] : '',
+            's_address_2' => isset($shipping['address_2']) ? $shipping['address_2'] : '',
+            's_city' => isset($shipping['city']) ? $shipping['city'] : '',
+            's_state' => isset($shipping['state']) ? $shipping['state'] : '',
+            's_country' => isset($shipping['country']) ? $shipping['country'] : '',
+            's_zipcode' => isset($shipping['zipcode']) ? $shipping['zipcode'] : '',
+        ];
+        $dataUserProfile = array_merge($dataProfileBilling, $dataProfileShipping);
 
         if ($hashPassword !== $user->password) {
             $dataUserUpdate['password'] = $this->hashPassword($request->get('password'), $this->fnGenerateSalt());
             $dataUserUpdate['salt'] = $user->salt;
             $dataUserUpdate['password_change_timestamp'] = time();
         }
-        // dd($dataUserUpdate);
+
         DB::beginTransaction();
         try {
             $userUpdate = DB::table('cscart_users')
@@ -114,7 +146,7 @@ class UserController extends BaseController
             Log::error($e);
             DB::rollback();
 
-            return $this->responseError(false, $e->getMessage());
+            return $this->responseError(self::HTTP_SERVER_ERROR, $e->getMessage());
         }
 
     }

@@ -50,7 +50,7 @@ class AuthController extends BaseController
             $password = $request->get('password');
             $validator = Validator::make($request->all(), [
                 'email' => 'required|email|unique:cscart_users,email',
-                'password' => 'required|min:6',
+                'password' => 'required',
                 'birthday' => 'date',
             ]);
 

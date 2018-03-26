@@ -40,26 +40,26 @@ class Product extends Model
     // GET ATTRIBUTE
     public function getPriceAttribute()
     {
-        return $this->productPrice->price;
+        return $this->productPrice->price ? $this->productPrice->price : '';
     }
 
     public function getDiscussionTypeAttribute()
     {
-        return $this->discussion->type;
+        return $this->discussion->type ? $this->discussion->type : '';
     }
 
     public function getDiscussionThreadIdAttribute()
     {
-        return $this->discussion->thread_id;
+        return $this->discussion->thread_id ? $this->discussion->thread_id : '';
     }
 
     public function getProductAttribute()
     {
-        return $this->productDescription->product;
+        return $this->productDescription->product ? $this->productDescription->product : '';
     }
 
     public function getBasePriceAttribute()
     {
-        return $this->productPrice->price;
+        return $this->productPrice->price ? $this->productPrice->price : '';
     }
 }
