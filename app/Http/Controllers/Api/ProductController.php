@@ -1,23 +1,35 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use App\Models\ProductSale;
+use App\Models\Product;
 use DB;
 
 class ProductController extends BaseController
 {
     public function productSale()
     {
-        $products = DB::table('cscart_product_sales as ps')
-            ->join('cscart_products as p', 'ps.product_id', '=', 'p.product_id')
-            ->join('cscart_product_prices as pp', 'ps.product_id', '=', 'pp.product_id')
-            ->select(
-                'p.*',
-                'pp.price'
-            )
+        $data =[];
+        $params = [];
+
+        $products = Product::join('cscart_product_sales as ps', 'cscart_products.product_id', '=', 'ps.product_id')
+            ->with([
+                'imagePairs' => function ($query) {
+                    $query->where('cscart_images_links.type', '=', 'A');
+                },
+                'mainPairs' => function ($query) {
+                    $query->where('cscart_images_links.type', '=', 'M');
+                },
+            ])
             ->where('ps.amount', '>', 0)
-            ->get();
+            ->orderBy('cscart_products.product_id', 'DESC')
+            ->paginate(config('app.per_page'));
 
+        if ($products) {
+            $params = $this->params($products, 'product_id', 'DESC');
+            $data = $products->items();
+        }
 
-        return $this->responseSuccess($products,[]);
+        return $this->responseSuccess($data, $params);
     }
 }
