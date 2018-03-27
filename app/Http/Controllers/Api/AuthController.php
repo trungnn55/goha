@@ -20,6 +20,7 @@ class AuthController extends BaseController
         if ($validator->fails()) {
             return $this->responseError(self::VALIDATE_ERROR, $validator->errors()->first());
         }
+
         $user = DB::table('cscart_users')
             ->where('email', $email)
             ->first();
@@ -40,7 +41,7 @@ class AuthController extends BaseController
             }
         }
 
-        return $this->responseError(self::RECORD_NOT_FOUND, 'user not found');
+        return $this->responseError(self::RECORD_NOT_FOUND, 'email or password is incorrect');
     }
 
     public function signUp(Request $request)

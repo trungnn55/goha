@@ -21,4 +21,5 @@ Route::group(['namespace' => 'Api', 'middleware' => ['authorize',]], function ()
     Route::resource('/banner', 'BannerController');
     Route::get('/product-sale', 'ProductController@productSale');
     Route::get('/hot-deal', 'ProductController@hotDeal');
+    Route::get('/favorite', 'ProductController@favorite');
 });

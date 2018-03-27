@@ -1,6 +1,8 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+
+use Illuminate\Http\Request;
 use App\Models\ProductSale;
 use App\Models\Product;
 use DB;
@@ -37,7 +39,7 @@ class ProductController extends BaseController
 
     public function hotDeal()
     {
-        $data =[];
+        $data = [];
         $params = [];
         $sortBy = 'viewed';
         $sortOrder = 'DESC';
@@ -52,6 +54,35 @@ class ProductController extends BaseController
                 },
             ])
             ->orderBy('pp.' . $sortBy, $sortOrder)
+            ->paginate(config('app.per_page'));
+
+        if ($products) {
+            $params = $this->params($products, $sortBy, $sortOrder);
+            $data = $products->items();
+        }
+
+        return $this->responseSuccess($data, $params);
+    }
+
+    public function favorite(Request $request)
+    {
+        $data = [];
+        $params = [];
+        $sortBy = 'product_id';
+        $sortOrder = 'ASC';
+        $userId = $this->getIdFromToken($request);
+
+        $products = Product::join('cscart_user_session_products as usp', 'cscart_products.product_id', '=', 'usp.product_id')
+            ->with([
+                'imagePairs' => function ($query) {
+                    $query->where('cscart_images_links.type', '=', 'A');
+                },
+                'mainPairs' => function ($query) {
+                    $query->where('cscart_images_links.type', '=', 'M');
+                },
+            ])
+            ->where('usp.user_id', $userId)
+            ->orderBy('usp.' . $sortBy, $sortOrder)
             ->paginate(config('app.per_page'));
 
         if ($products) {
