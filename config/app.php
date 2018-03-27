@@ -127,6 +127,9 @@ return [
 
     'expire_token' => time() + 24*60*60,
     'per_page' => 10,
+    'http_url' => env('HTTP_URL'),
+    'https_url' => env('HTTPS_URL'),
+    'absolute_path' => env('ABSOLUTE_PATH'),
 
     /*
     |--------------------------------------------------------------------------

@@ -8,9 +8,8 @@ class ImageLink extends Model
 {
     protected $table = 'cscart_images_links';
 
-    protected $fillable = [
-        'product_id',
-        'product_code',
-        'product_type',
-    ];
+    public function detailed()
+    {
+        return $this->hasOne(Image::class, 'image_id', 'detailed_id');
+    }
 }

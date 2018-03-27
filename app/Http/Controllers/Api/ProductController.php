@@ -20,10 +20,14 @@ class ProductController extends BaseController
             ->with([
                 'imagePairs' => function ($query) {
                     $query->where('cscart_images_links.type', '=', 'A');
+                    $query->where('cscart_images_links.object_type', '=', 'product');
                 },
+                'imagePairs.detailed',
                 'mainPairs' => function ($query) {
                     $query->where('cscart_images_links.type', '=', 'M');
+                    $query->where('cscart_images_links.object_type', '=', 'product');
                 },
+                'mainPairs.detailed',
             ])
             ->where('ps.amount', '>', 0)
             ->orderBy('cscart_products.' . $sortBy, $sortOrder)
@@ -48,10 +52,14 @@ class ProductController extends BaseController
             ->with([
                 'imagePairs' => function ($query) {
                     $query->where('cscart_images_links.type', '=', 'A');
+                    $query->where('cscart_images_links.object_type', '=', 'product');
                 },
+                'imagePairs.detailed',
                 'mainPairs' => function ($query) {
                     $query->where('cscart_images_links.type', '=', 'M');
+                    $query->where('cscart_images_links.object_type', '=', 'product');
                 },
+                'mainPairs.detailed',
             ])
             ->orderBy('pp.' . $sortBy, $sortOrder)
             ->paginate(config('app.per_page'));
@@ -76,10 +84,14 @@ class ProductController extends BaseController
             ->with([
                 'imagePairs' => function ($query) {
                     $query->where('cscart_images_links.type', '=', 'A');
+                    $query->where('cscart_images_links.object_type', '=', 'product');
                 },
+                'imagePairs.detailed',
                 'mainPairs' => function ($query) {
                     $query->where('cscart_images_links.type', '=', 'M');
+                    $query->where('cscart_images_links.object_type', '=', 'product');
                 },
+                'mainPairs.detailed',
             ])
             ->where('usp.user_id', $userId)
             ->orderBy('usp.' . $sortBy, $sortOrder)
@@ -91,5 +103,10 @@ class ProductController extends BaseController
         }
 
         return $this->responseSuccess($data, $params);
+    }
+
+    public function addFavorite(Request $request)
+    {
+        
     }
 }

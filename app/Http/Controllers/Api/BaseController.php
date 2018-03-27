@@ -44,18 +44,6 @@ class BaseController extends Controller
         ];
     }
 
-    public static function floor($x)
-    {
-        $is_negative = $x < 0;
-        $x = (string) $x;
-        if ($is_negative && strpos($x, '.')) {
-            list($x, $dec) = explode('.', $x);
-            $x = $x - ($dec ? 1 : 0);
-        }
-
-        return (int) $x;
-    }
-
     function hashPassword($password, $salt)
     {
         return md5(md5($password) . md5($salt));

@@ -23,7 +23,7 @@ class Product extends Model
 
     public function mainPairs()
     {
-        return $this->hasMany(ImageLink::class, 'object_id', 'product_id');
+        return $this->hasOne(ImageLink::class, 'object_id', 'product_id');
     }
 
     public function discussion()

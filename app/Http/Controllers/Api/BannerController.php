@@ -24,7 +24,7 @@ class BannerController extends BaseController
             ->paginate(config('app.per_page'));
 
         foreach ($banners as $key => $value) {
-            $banners[$key]->image_path = 'https://goha.jp/images/promo/' . $this->floor($value->image_id/1000) . '/' . $value->image_path;
+            $banners[$key]->image_path = 'https://goha.jp/images/promo/' . floor_image($value->image_id/1000) . '/' . $value->image_path;
         }
 
         if ($banners) {
