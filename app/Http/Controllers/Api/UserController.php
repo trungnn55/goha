@@ -4,6 +4,9 @@ namespace App\Http\Controllers\Api;
 
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
+use App\Models\UserSessionProduct;
+use App\Models\Product;
+use App\Models\User;
 use Validator;
 use Exception;
 use Log;
@@ -20,7 +23,7 @@ class UserController extends BaseController
                 ->where('u.user_id', $id)
                 ->first();
 
-            return $this->responseSuccess($user,[]);
+            return $this->responseSuccess(['data' => $user]);
         } catch (Exception $e) {
             Log::error($e);
 
@@ -139,8 +142,10 @@ class UserController extends BaseController
             DB::commit();
 
             return $this->responseSuccess([
-                'status' => true,
-                'message' => 'Update successfuly',
+                'data' => [
+                    'status' => true,
+                    'message' => 'Update successfuly',
+                ]
             ]);
         } catch (Exception $e) {
             Log::error($e);
@@ -149,5 +154,60 @@ class UserController extends BaseController
             return $this->responseError(self::HTTP_SERVER_ERROR, $e->getMessage());
         }
 
+    }
+
+    public function addFavorite(Request $request)
+    {
+        $userId = $this->getIdFromToken($request);
+        $productId = $request->get('product_id');
+        $user = User::where('user_id', $userId)->first();
+        $rule = ['product_id' => 'required|numeric|exists:cscart_products,product_id'];
+        $validator = Validator::make($request->all(), $rule);
+
+        if ($validator->fails()) {
+            return $this->responseError(self::VALIDATE_ERROR, $validator->errors()->first());
+        }
+
+        $product = Product::where('product_id', $productId)->first();
+        $checkExist = UserSessionProduct::where('user_id', $userId)
+            ->where('product_id', $productId)
+            ->where('type', 'W')
+            ->first();
+        if ($checkExist) {
+            return $this->responseError(self::RECORD_EXIST, 'This product is already exists in wishlist');
+        }
+
+        $dataUserSessionProduct = [
+            'user_id' => $userId,
+            'timestamp' => time(),
+            'type' => 'W',
+            'user_type' => $user->user_type,
+            'item_id' => generate_cart_id($productId),
+            'item_type' => $product->product_type,
+            'product_id' => $productId,
+            'amount' => $product->amount ? $product->amount : 1,
+            'price' => $product->price,
+            'session_id' => '',
+            'ip_address' => encode_ip($request->ip()),
+            'order_id' => 0,
+        ];
+        $dataExtra = $dataUserSessionProduct;
+        $dataExtra['product_options'] = [];
+        $dataExtra['extra'] = ['prodcut_options' => []];
+        $extra = serialize($dataExtra);
+        $dataUserSessionProduct['extra'] = $extra;
+
+        $userSessionProduct = UserSessionProduct::insert($dataUserSessionProduct);
+
+        if ($userSessionProduct) {
+            return $this->responseSuccess([
+                'data' => [
+                    'status' => true,
+                    'message' => 'Added to wishlist',
+                ]
+            ]);
+        }
+
+        return $this->responseError(self::HTTP_SERVER_ERROR, 'add to wishlist if failed');
     }
 }

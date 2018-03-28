@@ -21,7 +21,7 @@ class Product extends Model
         return $this->belongsTo(ProductPrice::class, 'product_id', 'product_id');
     }
 
-    public function mainPairs()
+    public function mainPair()
     {
         return $this->hasOne(ImageLink::class, 'object_id', 'product_id');
     }

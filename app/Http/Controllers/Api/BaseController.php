@@ -14,13 +14,13 @@ class BaseController extends Controller
     const HTTP_SERVER_ERROR = 500;
     const VALIDATE_ERROR = 701;
     const RECORD_NOT_FOUND = 702;
+    const RECORD_EXIST = 703;
 
     public function responseSuccess($data, $params = [])
     {
-        return response()->json([
-            'data' => $data,
-            'params' => $params,
-        ]);
+        $data['params'] = $params;
+
+        return response()->json($data);
     }
 
     public function responseError($code, $message)

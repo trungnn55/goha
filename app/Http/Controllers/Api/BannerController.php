@@ -1,14 +1,17 @@
 <?php
 
 namespace App\Http\Controllers\Api;
+use Illuminate\Http\Request;
 use DB;
 
 class BannerController extends BaseController
 {
-    public function index()
+    public function index(Request $request)
     {
         $data = [];
         $params = [];
+        $itemPerPage = $request->get('items_per_page') ? $request->get('items_per_page') : config('app.per_page');
+
         $banners = DB::table('cscart_banners as b')
             ->join('cscart_banner_descriptions as bd', 'b.banner_id', '=', 'bd.banner_id')
             ->join('cscart_banner_images as bi', 'b.banner_id', '=', 'bi.banner_id')
@@ -21,7 +24,7 @@ class BannerController extends BaseController
             ->where('bi.lang_code', 'ja')
             ->orderBy('banner_id', 'DESC')
             ->distinct()
-            ->paginate(config('app.per_page'));
+            ->paginate($itemPerPage);
 
         foreach ($banners as $key => $value) {
             $banners[$key]->image_path = 'https://goha.jp/images/promo/' . floor_image($value->image_id/1000) . '/' . $value->image_path;
@@ -32,7 +35,7 @@ class BannerController extends BaseController
             $data = $banners->items();
         }
 
-        return $this->responseSuccess($data,$params);
+        return $this->responseSuccess(['banners' => $data], $params);
     }
 
 
