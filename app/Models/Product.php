@@ -36,6 +36,16 @@ class Product extends Model
         return $this->hasOne(ProductDescription::class, 'product_id', 'product_id');
     }
 
+    public function productCategories()
+    {
+        return $this->hasMany(ProductCategory::class, 'product_id', 'product_id');
+    }
+
+    public function productPopularity()
+    {
+        return $this->hasOne(ProductPopularity::class, 'product_id', 'product_id');
+    }
+
 
     // GET ATTRIBUTE
     public function getPriceAttribute()

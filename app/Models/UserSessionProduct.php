@@ -8,6 +8,10 @@ class UserSessionProduct extends Model
 {
     protected $table = 'cscart_user_session_products';
 
+    protected $primaryKey = null;
+
+    public $timestamps = false;
+
     protected $fillable = [
         'user_id',
         'timestamp',

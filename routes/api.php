@@ -23,4 +23,8 @@ Route::group(['namespace' => 'Api', 'middleware' => ['authorize',]], function ()
     Route::get('/hot-deal', 'ProductController@hotDeal');
     Route::get('/favorite', 'ProductController@favorite');
     Route::post('/add-favorite', 'UserController@addFavorite');
+    Route::post('/delete-favorite', 'UserController@deleteFavorite');
+    Route::get('/cart', 'ProductController@cart');
+    Route::post('/add-cart', 'UserController@addCart');
+    Route::post('/delete-cart', 'UserController@deleteCart');
 });
