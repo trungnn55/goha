@@ -210,4 +210,89 @@ class UserController extends BaseController
 
         return $this->responseError(self::HTTP_SERVER_ERROR, 'add to wishlist if failed');
     }
+
+    public function deleteFavorite(Request $request)
+    {
+        $userId = $this->getIdFromToken($request);
+        $productId = $request->get('product_id');
+        $clear = $request->get('clear');
+        if ($clear) {
+            $productFavorites = UserSessionProduct::where('user_id', $userId)
+                ->where('type', 'W')
+                ->delete();
+        }
+    }
+
+    public function addCart(Request $request)
+    {
+        $userId = $this->getIdFromToken($request);
+        $productId = $request->get('product_id');
+        $amount = $request->get('amount');
+        $user = User::where('user_id', $userId)->first();
+        $rule = [
+            'product_id' => 'required|numeric|exists:cscart_products,product_id',
+            'amount' => 'numeric',
+        ];
+        $validator = Validator::make($request->all(), $rule);
+
+        if ($validator->fails()) {
+            return $this->responseError(self::VALIDATE_ERROR, $validator->errors()->first());
+        }
+
+        $product = Product::with([
+            'mainPair' => function ($query) {
+                    $query->where('cscart_images_links.type', '=', 'M');
+                    $query->where('cscart_images_links.object_type', '=', 'product');
+                },
+                'mainPair.detailed',
+            ])
+            ->where('product_id', $productId)
+            ->first();
+        $checkExist = UserSessionProduct::where('user_id', $userId)
+            ->where('product_id', $productId)
+            ->where('type', 'C')
+            ->first();
+        if ($checkExist) {
+            return $this->responseError(self::RECORD_EXIST, 'This product is already exists in wishlist');
+        }
+
+        $dataUserSessionProduct = [
+            'user_id' => $userId,
+            'timestamp' => time(),
+            'type' => 'C',
+            'user_type' => $user->user_type,
+            'item_id' => generate_cart_id($productId),
+            'item_type' => $product->product_type,
+            'product_id' => $productId,
+            'amount' => $amount ? $amount : 1,
+            'price' => $product->price,
+            'session_id' => '',
+            'ip_address' => encode_ip($request->ip()),
+            'order_id' => 0,
+        ];
+        $dataExtra = $dataUserSessionProduct;
+        $dataExtra['product_code'] = $product->product_code;
+        $dataExtra['product'] = $product->productDescription->product;
+        $dataExtra['company_id'] = $product->company_id;
+        $dataExtra['product_options'] = [];
+        $dataExtra['main_pair'] = $product->mainPair->toArray();
+        $dataExtra['extra'] = ['prodcut_options' => []];
+        dd($dataExtra);
+        $extra = serialize($dataExtra);
+        dd($extra);
+        $dataUserSessionProduct['extra'] = $extra;
+
+        $userSessionProduct = UserSessionProduct::insert($dataUserSessionProduct);
+
+        if ($userSessionProduct) {
+            return $this->responseSuccess([
+                'data' => [
+                    'status' => true,
+                    'message' => 'Added to wishlist',
+                ]
+            ]);
+        }
+
+        return $this->responseError(self::HTTP_SERVER_ERROR, 'add to wishlist if failed');
+    }
 }
