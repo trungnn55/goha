@@ -81,7 +81,7 @@ class AuthController extends BaseController
             if ($user && $userProfile) {
                 DB::commit();
                 return $this->responseSuccess([
-                    'status' => self::HTTP_OK,
+                    'status' => true,
                     'message' => 'Sign up successfuly',
                 ]);
             }

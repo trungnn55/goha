@@ -181,7 +181,7 @@ class UserController extends BaseController
                 'user_id' => $userId,
                 'timestamp' => time(),
                 'type' => 'W',
-                'user_type' => $user->user_type,
+                'user_type' => 'R',
                 'item_id' => generate_cart_id($productId),
                 'item_type' => $product->product_type,
                 'product_id' => $productId,
@@ -313,7 +313,7 @@ class UserController extends BaseController
                 'user_id' => $userId,
                 'timestamp' => time(),
                 'type' => 'C',
-                'user_type' => $user->user_type,
+                'user_type' => 'R',
                 'item_id' => generate_cart_id($productId),
                 'item_type' => $product->product_type,
                 'product_id' => $productId,
@@ -334,7 +334,7 @@ class UserController extends BaseController
             $dataExtra['display_price'] = $product->price;
             $dataExtra['return_period'] = $product->return_period;
             $dataExtra['product_options'] = $product->product_options ? $product->product_options : [];
-            $dataExtra['main_pair'] = $product->mainPair->toArray();
+            $dataExtra['main_pair'] = $product->mainPair ? $product->mainPair->toArray() : [];
             $dataExtra['amount_total'] = $amount;
             $dataExtra['modifiers_price'] = 0;
             $dataExtra['stored_discount'] = $product->stored_discount ? $product->stored_discount : 'N';
