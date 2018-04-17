@@ -27,4 +27,5 @@ Route::group(['namespace' => 'Api', 'middleware' => ['authorize',]], function ()
     Route::get('/cart', 'ProductController@cart');
     Route::post('/add-cart', 'UserController@addCart');
     Route::post('/delete-cart', 'UserController@deleteCart');
+    Route::post('/payment-link', 'UserController@paymentLink');
 });

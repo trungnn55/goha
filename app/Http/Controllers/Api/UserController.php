@@ -441,4 +441,100 @@ class UserController extends BaseController
             return $this->responseError(self::HTTP_SERVER_ERROR, $e->getMessage());
         }
     }
+
+    public function paymentLink(Request $request)
+    {
+        try {
+            $orderId = $request->get('order_id');
+            $order = DB::table('cscart_orders')->where('order_id', $orderId)->first();
+            $user = User::where('user_id', $order->user_id)->first();
+            $payment = DB::table('cscart_payments')->where('payment_id', $order->payment_id)->first();
+            $processorParams = unserialize($payment->processor_params);
+            $option = ["timeout" => "20"];
+            $request = new \HTTP_Request2('http://secure.epsilon.jp/cgi-bin/order/receive_order3.cgi', \HTTP_Request2::METHOD_POST, $option);
+            $request->addPostParameter('version', '2' );
+            $request->addPostParameter('contract_code', $processorParams['contract_code']);
+            $request->addPostParameter('user_id', $user->user_id);
+            $request->addPostParameter('user_name', mb_convert_encoding($user->firstname . $user->lastname, 'EUC-JP' , 'UTF-8'));
+            $request->addPostParameter('user_mail_add', $user->email);
+            $request->addPostParameter('item_code', 'EPSILON-0001');
+            $request->addPostParameter('item_name', mb_convert_encoding('お買い上げ商品', "UTF-8", "auto"));
+            $request->addPostParameter('order_number', $orderId . date('ymdHis'));
+            $request->addPostParameter('st_code', epsilon_get_st_code($processorParams));
+            $request->addPostParameter('mission_code', '1');
+            $request->addPostParameter('item_price', round($order->total));
+            $request->addPostParameter('process_code', '1');
+            $request->addPostParameter('memo1', '');
+            $request->addPostParameter('memo2', '');
+            $request->addPostParameter('xml', '1');
+            $request->addPostParameter('character_code', 'UTF8' );
+
+            // HTTPリクエスト実行
+            $response = $request->send();
+
+            // 応答内容(XML)の解析
+            $res_code = $response->getStatus();
+            $res_content = $response->getBody();
+            // dd($res_content);
+
+            $temp_xml_res = str_replace("x-sjis-cp932", "EUC-JP", $res_content);
+            $unserializer = new \XML_Unserializer();
+            $unserializer->setOption('parseAttributes', TRUE);
+            $unseriliz_st = $unserializer->unserialize($temp_xml_res);
+            if ($unseriliz_st === true) {
+                //xmlを解析
+                $res_array = $unserializer->getUnserializedData();
+                $xml_redirect_url = "";
+                $xml_error_cd = "";
+                $xml_error_msg = "";
+                $xml_memo1_msg = "";
+                $xml_memo2_msg = "";
+                $is_error = false;
+
+                foreach($res_array['result'] as $uns_k => $uns_v){
+
+                    list($result_atr_key, $result_atr_val) = each($uns_v);
+
+                    switch ($result_atr_key) {
+                        case 'redirect':
+                            $xml_redirect_url = rawurldecode($result_atr_val);
+                            break;
+                        case 'err_code':
+                            $is_error = true;
+                            $xml_error_msg = $result_atr_val;
+                            break;
+                        case 'err_detail':
+                            $xml_error_msg = $result_atr_val;
+                            break;
+                        case 'memo1':
+                            // コンバート元の文字コードを検出するよう変更
+                            $xml_error_msg = mb_convert_encoding(urldecode($result_atr_val), "UTF-8", fn_detect_encoding(urldecode($result_atr_val), 'S'));
+
+                            break;
+                        case 'memo2':
+                            // コンバート元の文字コードを検出するよう変更
+                            $xml_error_msg = mb_convert_encoding(urldecode($result_atr_val), "UTF-8", fn_detect_encoding(urldecode($result_atr_val), 'S'));
+                            break;
+                        default:
+                            break;
+                    }
+                }
+
+            // XMLのパースに失敗した場合
+            }else{
+                $is_error = true;
+            }
+
+            if($is_error){
+                return $this->responseError(self::HTTP_SERVER_ERROR, $xml_error_msg);
+            }else{
+                return $this->responseSuccess(['url' => $xml_redirect_url]);
+            }
+
+        } catch(Exception $e) {
+            Log::error($e);
+
+            return $this->responseError(self::HTTP_SERVER_ERROR, $e->getMessage());
+        }
+    }
 }
